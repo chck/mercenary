@@ -10,5 +10,7 @@ import scrapy
 
 class MercenaryItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+    title = scrapy.Field()
+    url = scrapy.Field()
+    quantity = scrapy.Field()
+    price = scrapy.Field()
