@@ -6,6 +6,8 @@ from urllib import parse
 import scrapy
 from bs4 import BeautifulSoup
 
+from mercenary.items import MercenaryItem
+
 """PagingSpider=>ProductsSpider=>CpSpider
 """
 
@@ -66,6 +68,12 @@ class FurusatoTaxProductSpider(scrapy.Spider):
             print("{}:::{}".format(qc, quantities))
             # TODO: 抽出できた量のうち個数と量の単位に分けて+とxをうまく演算する処理
 
+            return MercenaryItem(title=title,
+                                 locality=locality,
+                                 url=self.start_urls[0],
+                                 quantity="",
+                                 price=price,
+                                 raw=quantities)
         else:
             print("指定タグ内に量が見つからないよ。別のところからひっぱってきてね")
             # TODO: 別のところから量を見つける処理 or 諦める
