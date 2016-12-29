@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from mercenary.items import MercenaryItem
 
-"""PagingSpider=>ProductsSpider=>CpSpider
+"""PagingSpider=>ProductSpider
 """
 
 
@@ -17,8 +17,10 @@ class FurusatoTaxPagingSpider(scrapy.Spider):
     allowed_domains = ["furusato-tax.jp"]
     base_url = "http://{}".format(allowed_domains[0])
 
+    query = "いくら"
+
     start_urls = [
-        "{}/search.html?target=1&q={}".format(base_url, parse.quote("いくら")),
+        "{}/search.html?target=1&q={}".format(base_url, parse.quote(query)),
     ]
 
     def parse(self, response):
