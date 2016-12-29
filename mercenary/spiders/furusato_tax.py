@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
-import scrapy
+import mojimoji
+import re
 from urllib import parse
+
+import scrapy
 from bs4 import BeautifulSoup
 
+"""PagingSpider=>ProductsSpider=>CpSpider
+"""
 
 
 class FurusatoTaxPagingSpider(scrapy.Spider):
@@ -55,3 +60,29 @@ class FurusatoTaxProductsSpider(scrapy.Spider):
             url = "{}{}".format(self.base_url, product.attrs['href'])
             yield scrapy.Request(url)
 
+
+class FurusatoTaxCpSpider(scrapy.Spider):
+    name = "furusato-tax-cp"
+    allowed_domains = ["furusato-tax.jp"]
+    base_url = "http://{}".format(allowed_domains[0])
+
+    def __init__(self, product_id, *args, **kwargs):
+        super(FurusatoTaxCpSpider, self).__init__(*args, **kwargs)
+        self.product_id = product_id
+        self.start_urls = [
+            "{}/japan/prefecture/item_detail/{}".format(self.base_url, product_id),
+        ]
+
+    def parse(self, response):
+        soup = BeautifulSoup(response.body, "lxml")
+
+        quantity_candidate = soup.find("div", class_="floatR non_floatRsp item_text").find("dd")
+        if quantity_candidate:
+            qc = mojimoji.zen_to_han(quantity_candidate.text, kana=False)
+            quantities = re.findall(r"\d+[mk]?[gm本個]", qc)
+            print("{}:::{}".format(qc, quantities))
+            # TODO: 抽出できた量のうち個数と量の単位に分けて+とxをうまく演算する処理
+
+        else:
+            print("指定タグ内に量が見つからないよ。別のところからひっぱってきてね")
+            # TODO: 別のところから量を見つける処理 or 諦める
