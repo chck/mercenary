@@ -59,23 +59,25 @@ class FurusatoTaxProductSpider(scrapy.Spider):
 
         title = soup.find("h1", class_="itemDitailh1_sp_fontSize mT05").text
         locality = soup.find("div", class_="titlePrefectures").text
-        price = soup.find("div", class_="clearfix text-right mT10") \
-            .find("span", class_="fs_32 text-red").text.replace(",", "")
+        price = float(soup.find("div", class_="clearfix text-right mT10")
+                      .find("span", class_="fs_32 text-red").text.replace(",", ""))
 
-        quantity_candidate = soup.find("div", class_="floatR non_floatRsp item_text").find("dd")
-        if quantity_candidate:
-            qc = mojimoji.zen_to_han(quantity_candidate.text, kana=False)
+        quantity_candidates = soup.find("div", class_="floatR non_floatRsp item_text").find("dd")
+        if quantity_candidates:
+            qc = mojimoji.zen_to_han(quantity_candidates.text, kana=False)
+            carelessly_quantity = sum(map(lambda q: int(q), re.findall(r"\d+", qc)))
             # TODO: 袋、尾、切、入、枚、箱、玉、肩、パック(PC)、\d+L(3L1kg, 3L4肩)、各\d+g、x\d+、小数点(1.7kg)、\d+人前、
-            quantities = re.findall(r"\d+[mk]?[lg㎏m本個]", qc)
-            print("{}:::{}".format(qc, quantities))
+            careful_quantities = re.findall(r"\d+[mk]?[lg㎏m本個]", qc)
+            # print("{}:::{}".format(qc, careful_quantities))
             # TODO: 抽出できた量のうち個数と量の単位に分けて+とxをうまく演算する処理
-
             return MercenaryItem(title=title,
                                  locality=locality,
-                                 url=self.start_urls[0],
-                                 quantity="",
+                                 url=response.url,
+                                 cp=round(price / carelessly_quantity, 2),
+                                 quantity=carelessly_quantity,
                                  price=price,
-                                 raw=quantities)
+                                 careful_quantities=careful_quantities,
+                                 raw=qc)
         else:
             print("指定タグ内に量が見つからないよ。別のところからひっぱってきてね")
             # TODO: 別のところから量を見つける処理 or 諦める

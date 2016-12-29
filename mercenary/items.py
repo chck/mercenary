@@ -13,6 +13,8 @@ class MercenaryItem(scrapy.Item):
     title = scrapy.Field()
     locality = scrapy.Field()
     url = scrapy.Field()
+    cp = scrapy.Field()
     quantity = scrapy.Field()
     price = scrapy.Field()
+    careful_quantities = scrapy.Field()
     raw = scrapy.Field()
