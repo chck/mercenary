@@ -66,19 +66,34 @@ class FurusatoTaxProductSpider(scrapy.Spider):
         quantity_candidates = soup.find("div", class_="floatR non_floatRsp item_text").find("dd")
         if quantity_candidates:
             qc = mojimoji.zen_to_han(quantity_candidates.text, kana=False)
-            carelessly_quantity = sum(map(lambda q: int(q), re.findall(r"\d+", qc)))
+            most_granular = re.sub(re.compile("(\d+)(l|ℓ|kg|㎏)", re.IGNORECASE),
+                                   lambda m: str(int(m.group(1)) * 1000) + "g",
+                                   qc)
+            carelessly_quantity = sum(map(lambda q: int(q), re.findall(r"\d+", most_granular)))
             # TODO: 袋、尾、切、入、枚、箱、玉、肩、パック(PC)、\d+L(3L1kg, 3L4肩)、各\d+g、x\d+、小数点(1.7kg)、\d+人前、
-            careful_quantities = re.findall(r"\d+[mk]?[lg㎏m本個]", qc)
+            # careful_quantities = re.findall(r"\d+[mk]?[lg㎏m本個]", qc)
+            careful_quantity = self.__careful_quantity(most_granular)
+
             # print("{}:::{}".format(qc, careful_quantities))
             # TODO: 抽出できた量のうち個数と量の単位に分けて+とxをうまく演算する処理
             return MercenaryItem(title=title,
                                  locality=locality,
                                  url=response.url,
-                                 cp=round(price / carelessly_quantity, 2),
-                                 quantity=carelessly_quantity,
+                                 cp=round(price / careful_quantity, 2),
+                                 carelessly_quantity=carelessly_quantity,
                                  price=price,
-                                 careful_quantities=careful_quantities,
+                                 careful_quantity=careful_quantity,
                                  raw=qc)
         else:
             print("指定タグ内に量が見つからないよ。別のところからひっぱってきてね")
             # TODO: 別のところから量を見つける処理 or 諦める
+            quantity_candidates = mojimoji.zen_to_han(soup.find("div", class_="floatL").text, kana=False)
+            carelessly_quantity = sum(map(lambda q: int(q), re.findall(r"\d+", quantity_candidates)))
+
+    def __careful_quantity(self, text):
+        """
+        テキストから量を抽出、グラム換算して集計
+        :param text:
+        :return: careful_quantity
+        """
+        return sum([int(quantity) for quantity in re.findall(r"(\d+)[mk]?[lg㎏m]", text)])
