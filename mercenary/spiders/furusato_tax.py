@@ -17,11 +17,12 @@ class FurusatoTaxPagingSpider(scrapy.Spider):
     allowed_domains = ["furusato-tax.jp"]
     base_url = "http://{}".format(allowed_domains[0])
 
-    query = "いくら"
-
-    start_urls = [
-        "{}/search.html?target=1&q={}".format(base_url, parse.quote(query)),
-    ]
+    def __init__(self, query, *args, **kwargs):
+        super(FurusatoTaxPagingSpider, self).__init__(*args, **kwargs)
+        self.query = query
+        self.start_urls = [
+            "{}/search.html?target=1&q={}".format(self.base_url, parse.quote(query)),
+        ]
 
     def parse(self, response):
         soup = BeautifulSoup(response.body, "lxml")
